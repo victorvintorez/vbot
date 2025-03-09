@@ -1,5 +1,5 @@
 use poise::serenity_prelude as serenity;
-use std::{collections::HashMap, env::var, error, sync::Mutex};
+use std::{collections::HashMap, error, sync::Mutex};
 use tracing::{info, warn};
 
 mod commands;
@@ -30,8 +30,10 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
-#[tokio::main]
-async fn main() {
+#[shuttle_runtime::main]
+async fn main(
+    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
+) -> shuttle_serenity::ShuttleSerenity {
     tracing_subscriber::fmt::init();
 
     let options = poise::FrameworkOptions {
@@ -85,12 +87,15 @@ async fn main() {
         .options(options)
         .build();
 
-    let token = var("DISCORD_TOKEN").expect("Missing `DISCORD_TOKEN` env var");
+    let token = secrets
+        .get("DISCORD_TOKEN")
+        .expect("Missing `DISCORD_TOKEN` env var");
     let intents = serenity::GatewayIntents::privileged();
 
     let client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
-        .await;
+        .await
+        .expect("error creating client");
 
-    client.unwrap().start().await.unwrap()
+    Ok(client.into())
 }
