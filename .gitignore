@@ -2,3 +2,6 @@ debug/
 target/
 **/*.rs.bk
 *.pdb
+/target
+.shuttle*
+Secrets*.toml
