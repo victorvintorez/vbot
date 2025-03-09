@@ -34,8 +34,6 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 async fn main(
     #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
 ) -> shuttle_serenity::ShuttleSerenity {
-    tracing_subscriber::fmt::init();
-
     let options = poise::FrameworkOptions {
         commands: vec![commands::help(), commands::verify()],
         prefix_options: poise::PrefixFrameworkOptions {
