@@ -7,7 +7,10 @@ mod listeners;
 
 const GUILD_ID: u64 = 1347211535554183298;
 const VERIFIED_ROLE_ID: serenity::RoleId = serenity::RoleId::new(1347975552262340630);
-const MODERATOR_ROLE_IDS: Vec<serenity::RoleId> = vec![];
+const MODERATOR_ROLE_IDS: [serenity::RoleId; 2] = [
+    serenity::RoleId::new(1347211915574902854),
+    serenity::RoleId::new(1347212116532265092),
+];
 
 pub type Error = Box<dyn error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
@@ -22,6 +25,24 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
         poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
         poise::FrameworkError::Command { error, ctx, .. } => {
             warn!("Error in command `{}`: {:?}", ctx.command().name, error);
+        }
+        poise::FrameworkError::CommandCheckFailed {  ctx, .. } => {
+            match ctx
+                .say("Oops! Looks like you don't have the correct permissions for this command!")
+                .await
+            {
+                Ok(_) => {
+                    info!(
+                        "Member {} tried to run Command {} without the correct permissions!",
+                        ctx.author().name,
+                        ctx.command().name
+                    );
+                }
+                Err(_err) => warn!(
+                    "Couldn't send response to permission check in Command {}",
+                    ctx.command().name
+                ),
+            };
         }
         error => {
             if let Err(e) = poise::builtins::on_error(error).await {
