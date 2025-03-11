@@ -33,13 +33,13 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
         response += &"Users on Waitlist";
         if hash_map.len() > 0 {
             for (_id, name) in hash_map.iter() {
-                response += &format!("- {}", name)
+                response += &format!("\n- {}", name)
             }
         } else {
-            response += &"None!";
+            response += &"\nNone!";
         };
     } else {
-        response += &"Couldn't fetch the list of users on the waitlist!";
+        response = "Couldn't fetch the list of users on the waitlist!".to_string();
     };
     ctx.say(response).await?;
     Ok(())
@@ -50,49 +50,36 @@ pub async fn verify(
     ctx: Context<'_>,
     #[description = "Choose member to allow access to server"]
     #[autocomplete = "poise::builtins::autocomplete_command"]
-    member: Option<serenity::Member>,
+    member: serenity::Member,
 ) -> Result<(), Error> {
-    if let Some(member) = member {
-        let member_exists = match ctx.data().unverified_members.lock() {
-            Ok(hash_map) => hash_map.contains_key(&member.user.id.into()),
-            Err(err) => {
-                warn!("Could not allow member access to server: {:?}", err);
-                false
-            }
+    let response: String;
+
+    if !member.roles.contains(&VERIFIED_ROLE_ID) {
+        let role_add_success = match member.add_role(ctx, VERIFIED_ROLE_ID).await {
+            Ok(_) => true,
+            Err(_err) => false,
         };
-        if member_exists {
-            member.add_role(ctx, VERIFIED_ROLE_ID).await?;
-            let success = match ctx.data().unverified_members.lock() {
+
+        if role_add_success {
+            match ctx.data().unverified_members.lock() {
                 Ok(mut hash_map) => {
                     hash_map.remove(&member.user.id.into());
-                    true
+                    response = format!("{} now has access to the server!", member.user.name);
                 }
-                Err(err) => {
-                    warn!("Could not allow member access to server: {:?}", err);
-                    false
+                Err(_err) => {
+                    response = format!(
+                        "Failed to remove {} from waitlist (user may still have been verified)...",
+                        member.user.name
+                    )
                 }
-            };
-
-            if success {
-                ctx.say(format!(
-                    "{} should now be able to access the server!",
-                    member.user.name,
-                ))
-                .await?;
-            } else {
-                ctx.say(format!(
-                    "Could not allow {} access to server: A server error occurred!",
-                    member.user.name
-                ))
-                .await?;
             }
         } else {
-            ctx.say(format!("{} is already verified!", member.user.name))
-                .await?;
+            response = format!("Failed to add Verified Role to {}...", member.user.name);
         }
     } else {
-        // show list of users with buttons to verify
+        response = format!("{} is already verified!", member.user.name);
     };
 
+    ctx.say(response).await?;
     Ok(())
 }
