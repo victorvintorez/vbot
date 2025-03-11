@@ -32,8 +32,8 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     if let Ok(hash_map) = ctx.data().unverified_members.lock() {
         response += &"Users on Waitlist";
         if hash_map.len() > 0 {
-            for (_id, name) in hash_map.iter() {
-                response += &format!("\n- {}", name)
+            for (id, _name) in hash_map.iter() {
+                response += &format!("\n- <@{}>", id)
             }
         } else {
             response += &"\nNone!";
@@ -64,20 +64,20 @@ pub async fn verify(
             match ctx.data().unverified_members.lock() {
                 Ok(mut hash_map) => {
                     hash_map.remove(&member.user.id.into());
-                    response = format!("{} now has access to the server!", member.user.name);
+                    response = format!("<@{}> now has access to the server!", member.user.id);
                 }
                 Err(_err) => {
                     response = format!(
-                        "Failed to remove {} from waitlist (user may still have been verified)...",
-                        member.user.name
+                        "Failed to remove <@{}> from waitlist (user may still have been verified)...",
+                        member.user.id
                     )
                 }
             }
         } else {
-            response = format!("Failed to add Verified Role to {}...", member.user.name);
+            response = format!("Failed to add Verified Role to <@{}>...", member.user.id);
         }
     } else {
-        response = format!("{} is already verified!", member.user.name);
+        response = format!("<@{}> is already verified!", member.user.id);
     };
 
     ctx.say(response).await?;

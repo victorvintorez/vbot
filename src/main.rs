@@ -26,7 +26,7 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
         poise::FrameworkError::Command { error, ctx, .. } => {
             warn!("Error in command `{}`: {:?}", ctx.command().name, error);
         }
-        poise::FrameworkError::CommandCheckFailed {  ctx, .. } => {
+        poise::FrameworkError::CommandCheckFailed { ctx, .. } => {
             match ctx
                 .say("Oops! Looks like you don't have the correct permissions for this command!")
                 .await
@@ -53,16 +53,9 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 }
 
 pub async fn is_mod(ctx: Context<'_>) -> Result<bool, Error> {
-    match ctx.author_member().await {
-        Some(member) => Ok(member
-            .roles
-            .iter()
-            .filter(|role| MODERATOR_ROLE_IDS.contains(role))
-            .collect::<Vec<_>>()
-            .len()
-            > 0),
-        None => Ok(false),
-    }
+    Ok(ctx.author_member().await.map(|member| {
+        member.roles.iter().any(|role| MODERATOR_ROLE_IDS.contains(role))
+    }).unwrap_or(false))
 }
 
 #[shuttle_runtime::main]
