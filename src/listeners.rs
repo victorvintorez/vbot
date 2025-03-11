@@ -19,7 +19,7 @@ pub async fn listen(
                         guild_members.iter().for_each(|member| {
                             if !member
                                 .roles
-                                .contains(&serenity::RoleId::new(VERIFIED_ROLE_ID))
+                                .contains(&VERIFIED_ROLE_ID)
                             {
                                 hash_map.insert(member.user.id.into(), member.user.name.clone());
                             }

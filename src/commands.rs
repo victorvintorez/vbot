@@ -1,7 +1,7 @@
 use poise::serenity_prelude as serenity;
 use tracing::warn;
 
-use crate::{Context, Error, VERIFIED_ROLE_ID};
+use crate::{Context, Error, VERIFIED_ROLE_ID, is_mod};
 
 #[poise::command(slash_command)]
 pub async fn help(
@@ -31,8 +31,12 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     if let Ok(hash_map) = ctx.data().unverified_members.lock() {
         let mut response = String::new();
         response += &"Users on Waitlist";
-        for (_id, name) in hash_map.iter() {
-            response += &format!("- {}", name)
+        if hash_map.len() > 0 {
+            for (_id, name) in hash_map.iter() {
+                response += &format!("- {}", name)
+            }
+        } else {
+            response += &"None!";
         }
     } else {
         ctx.say(format!("Couldn't fetch the list of users on the waitlist!"))
@@ -41,7 +45,7 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-#[poise::command(slash_command)]
+#[poise::command(slash_command, check = "is_mod")]
 pub async fn verify(
     ctx: Context<'_>,
     #[description = "Choose member to allow access to server"]
@@ -57,9 +61,7 @@ pub async fn verify(
             }
         };
         if member_exists {
-            member
-                .add_role(ctx, serenity::RoleId::new(VERIFIED_ROLE_ID))
-                .await?;
+            member.add_role(ctx, VERIFIED_ROLE_ID).await?;
             let success = match ctx.data().unverified_members.lock() {
                 Ok(mut hash_map) => {
                     hash_map.remove(&member.user.id.into());

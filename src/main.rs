@@ -6,14 +6,15 @@ mod commands;
 mod listeners;
 
 const GUILD_ID: u64 = 1347211535554183298;
-const VERIFIED_ROLE_ID: u64 = 1347975552262340630;
+const VERIFIED_ROLE_ID: serenity::RoleId = serenity::RoleId::new(1347975552262340630);
+const MODERATOR_ROLE_IDS: Vec<serenity::RoleId> = vec![];
 
 pub type Error = Box<dyn error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 pub struct Data {
-    unverified_members: Mutex<HashMap<u64, String>>, // [ username, userid ]
-    custom_roles: Mutex<HashMap<u32, u32>>,          // [ roleid, userid ]
+    unverified_members: Mutex<HashMap<u64, String>>, // [ userid, username ]
+    custom_roles: Mutex<HashMap<u32, u32>>,          // [ userid, roleid ]
 }
 
 async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
@@ -30,12 +31,30 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
+pub async fn is_mod(ctx: Context<'_>) -> Result<bool, Error> {
+    match ctx.author_member().await {
+        Some(member) => Ok(member
+            .roles
+            .iter()
+            .filter(|role| MODERATOR_ROLE_IDS.contains(role))
+            .collect::<Vec<_>>()
+            .len()
+            > 0),
+        None => Ok(false),
+    }
+}
+
 #[shuttle_runtime::main]
 async fn main(
     #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
 ) -> shuttle_serenity::ShuttleSerenity {
     let options = poise::FrameworkOptions {
-        commands: vec![commands::help(), commands::verify()],
+        commands: vec![
+            commands::help(),
+            commands::waitlist(),
+            commands::show(),
+            commands::verify(),
+        ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: None,
             ..Default::default()
@@ -59,6 +78,7 @@ async fn main(
                 )
             })
         },
+
         event_handler: |ctx, event, framework, state| {
             Box::pin(listeners::listen(ctx, event, framework, state))
         },
