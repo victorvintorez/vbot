@@ -21,6 +21,26 @@ pub async fn help(
     Ok(())
 }
 
+#[poise::command(slash_command, subcommands("show", "verify"), subcommand_required)]
+pub async fn waitlist(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+#[poise::command(slash_command)]
+pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
+    if let Ok(hash_map) = ctx.data().unverified_members.lock() {
+        let mut response = String::new();
+        response += &"Users on Waitlist";
+        for (_id, name) in hash_map.iter() {
+            response += &format!("- {}", name)
+        }
+    } else {
+        ctx.say(format!("Couldn't fetch the list of users on the waitlist!"))
+            .await?;
+    };
+    Ok(())
+}
+
 #[poise::command(slash_command)]
 pub async fn verify(
     ctx: Context<'_>,
