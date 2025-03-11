@@ -1,5 +1,4 @@
 use poise::serenity_prelude as serenity;
-use tracing::warn;
 
 use crate::{Context, Error, VERIFIED_ROLE_ID, is_mod};
 
@@ -29,7 +28,7 @@ pub async fn waitlist(_ctx: Context<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
     let mut response = String::new();
-    if let Ok(hash_map) = ctx.data().unverified_members.lock() {
+    if let Ok(hash_map) = ctx.data().waitlist.lock() {
         response += &"Users on Waitlist";
         if hash_map.len() > 0 {
             for (id, _name) in hash_map.iter() {
@@ -61,7 +60,7 @@ pub async fn verify(
         };
 
         if role_add_success {
-            match ctx.data().unverified_members.lock() {
+            match ctx.data().waitlist.lock() {
                 Ok(mut hash_map) => {
                     hash_map.remove(&member.user.id.into());
                     response = format!("<@{}> now has access to the server!", member.user.id);

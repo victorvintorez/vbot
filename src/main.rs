@@ -16,7 +16,7 @@ pub type Error = Box<dyn error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 pub struct Data {
-    unverified_members: Mutex<HashMap<u64, String>>, // [ userid, username ]
+    waitlist: Mutex<HashMap<u64, String>>, // [ userid, username ]
     custom_roles: Mutex<HashMap<u32, u32>>,          // [ userid, roleid ]
 }
 
@@ -70,10 +70,7 @@ async fn main(
     #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
 ) -> shuttle_serenity::ShuttleSerenity {
     let options = poise::FrameworkOptions {
-        commands: vec![
-            commands::help(),
-            commands::waitlist(),
-        ],
+        commands: vec![commands::help(), commands::waitlist()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: None,
             ..Default::default()
@@ -116,7 +113,7 @@ async fn main(
                 .await?;
 
                 Ok(Data {
-                    unverified_members: Mutex::new(HashMap::new()),
+                    waitlist: Mutex::new(HashMap::new()),
                     custom_roles: Mutex::new(HashMap::new()),
                 })
             })
