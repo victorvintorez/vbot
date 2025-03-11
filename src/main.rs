@@ -53,9 +53,16 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 }
 
 pub async fn is_mod(ctx: Context<'_>) -> Result<bool, Error> {
-    Ok(ctx.author_member().await.map(|member| {
-        member.roles.iter().any(|role| MODERATOR_ROLE_IDS.contains(role))
-    }).unwrap_or(false))
+    Ok(ctx
+        .author_member()
+        .await
+        .map(|member| {
+            member
+                .roles
+                .iter()
+                .any(|role| MODERATOR_ROLE_IDS.contains(role))
+        })
+        .unwrap_or(false))
 }
 
 #[shuttle_runtime::main]
@@ -66,8 +73,6 @@ async fn main(
         commands: vec![
             commands::help(),
             commands::waitlist(),
-            commands::show(),
-            commands::verify(),
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: None,
