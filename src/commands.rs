@@ -28,8 +28,8 @@ pub async fn waitlist(_ctx: Context<'_>) -> Result<(), Error> {
 
 #[poise::command(slash_command)]
 pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
+    let mut response = String::new();
     if let Ok(hash_map) = ctx.data().unverified_members.lock() {
-        let mut response = String::new();
         response += &"Users on Waitlist";
         if hash_map.len() > 0 {
             for (_id, name) in hash_map.iter() {
@@ -37,11 +37,11 @@ pub async fn show(ctx: Context<'_>) -> Result<(), Error> {
             }
         } else {
             response += &"None!";
-        }
+        };
     } else {
-        ctx.say(format!("Couldn't fetch the list of users on the waitlist!"))
-            .await?;
+        response += &"Couldn't fetch the list of users on the waitlist!";
     };
+    ctx.say(response).await?;
     Ok(())
 }
 
